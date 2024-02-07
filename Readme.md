@@ -1,5 +1,24 @@
 ## 相关合约：
+### sunswap V1
 
+#### Factory
+
+TXk8rQSAvPvBBNtqSoY6nCfsXWCSSpTVQF
+
+https://tronscan.org/#/contract/TXk8rQSAvPvBBNtqSoY6nCfsXWCSSpTVQF
+#### Pair
+
+TDNbPAZh1cWvdJDnJ5M56eCwbxFm7b1x8V
+https://tronscan.org/#/contract/TDNbPAZh1cWvdJDnJ5M56eCwbxFm7b1x8V
+
+#### GetPairAddress
+
+```
+    // V1 Pair is TRX - tokenAddress lp
+    factory.getExchange(tokenAddress);
+```
+
+#### 
 ### sunswap V2
 
 #### router
@@ -14,12 +33,13 @@ TKWJdrQkqHisa1X8HUdHEfREvTzw4pMAaY
 ABI 见 V2Factory.abi
 
 
-#### Pair
+#### GetPair
 
-地址 ：
-router.getPairOffChain(tokenA,tokenB)
-或 factory.getPair(tokenA,tokenB)
-
+```
+    router.getPairOffChain(tokenA,tokenB)
+    or 
+    factory.getPair(tokenA,tokenB)
+```
 ABI 见 V2Pair.abi
 
 ### sunswap V3
@@ -45,12 +65,11 @@ ABI 见 V3NFTPostionManager.abi
 #### pool
 
 获取池子地址：
+```
+    factory.getPool(tokenA,tokenB,费率);
 
-factory.getPool(tokenA,tokenB,费率);
-
-当前费率： 100、500、3000、10000 对应四个等级的交易池
-获取池子的
-
+    当前费率： 100、500、3000、10000 对应四个等级的交易池
+```
 ### 智能路由合约
 
 TFVisXFaijZfeyeSjCEVkHfex7HGdTxzF9
@@ -90,6 +109,70 @@ USDD 2pool(USDD+USDT) TNTfaTpkdd4AQDeqr8SGG7tgdkdjdhbP5c
 Old USDC(USDC+USDJ+TUSD+USDT) TQx6CdLHqjwVmJ45ecRzodKfVumAsdoRXH
 
 ## 流动性变化
+
+### sunswapV1
+1. 添加流动性
+
+核心 pool 抛出EVENT:
+
+topic AddLiquidity = `06239653922ac7bea6aa2b19dc486b9361821d37712eb796adfd38d81de278ca`;
+
+```
+    /** 
+    * @notice Deposit TRX && Tokens (token) at current ratio to mint UNI tokens.
+    * @dev min_liquidity does nothing when total UNI supply is 0.
+    * @param min_liquidity Minimum number of UNI sender will mint if total UNI supply is greater than 0.
+    * @param max_tokens Maximum number of tokens deposited. Deposits max amount if total UNI supply is 0.
+    * @param deadline Time after which this transaction can no longer be executed.
+    * @return The amount of UNI minted.
+    */
+    function addLiquidity(
+        uint256 min_liquidity, 
+        uint256 max_tokens, 
+        uint256 deadline
+        ) returns (uint256);
+
+```
+EVENT:
+
+```
+    event AddLiquidity(address indexed provider, uint256 indexed trx_amount, uint256 indexed token_amount);
+```
+Example:
+https://tronscan.org/#/transaction/56f6b940ed7f156b28e0ad9d003331c754a66ec1619acb6654b74466877776fa
+2. 移除流动性
+
+核心 pool 抛出EVENT:
+
+topic RemoveLiquidity = `0fbf06c058b90cb038a618f8c2acbf6145f8b3570fd1fa56abb8f0f3f05b36e8`
+
+```
+    /**
+    * @dev Burn UNI tokens to withdraw TRX && Tokens at current ratio.
+    * @param amount Amount of UNI burned.
+    * @param min_trx Minimum TRX withdrawn.
+    * @param min_tokens Minimum Tokens withdrawn.
+    * @param deadline Time after which this transaction can no longer be executed.
+    * @return The amount of TRX && Tokens withdrawn.
+    */
+    function removeLiquidity(
+        uint256 amount, 
+        uint256 min_trx, 
+        uint256 min_tokens, 
+        uint256 deadline
+    ) returns (uint256, uint256)
+```
+EVENT:
+
+```
+    event RemoveLiquidity(address indexed provider, uint256 indexed trx_amount, uint256 indexed token_amount);
+```
+Example:
+
+https://tronscan.org/#/transaction/30762f5cac0991c07ec3fab6a29a789c1b502443e151c6a8796956c46abd9b60
+
+3. TVL 计算
+同 sunswapV2 
 
 ### sunswapV2
 
@@ -722,11 +805,49 @@ https://tronscan.org/#/transaction/356018b69df2ccbe4a27c101c12a9094f845260ffdd01
 
 ## 交易
 
+
 EVENT:
+
+### V1
+
+use Snapshot event to calculate the exchange if happened
+
+1. Buy TRX 
+
+topic TrxPurchase = `dad9ec5c9b9c82bf6927bf0b64293dcdd1f82c92793aef3c5f26d7b93a4a5306`
+
+```
+
+  event TrxPurchase(
+      address indexed buyer, 
+      uint256 indexed tokens_sold, 
+      uint256 indexed trx_bought);
+```
+2. Buy Token
+
+topic TokenPurchase = `cd60aa75dea3072fbc07ae6d7d856b5dc5f4eee88854f5b4abf7b680ef8bc50f`
+
+```
+    event TokenPurchase(
+        address indexed buyer, 
+        uint256 indexed trx_sold, 
+        uint256 indexed tokens_bought);
+```
+3. Snapshot
+
+topic Snapshot= `cc7244d3535e7639366f8c5211527112e01de3ec7449ee3a6e66b007f4065a70`
+
+```
+    event Snapshot(
+        address indexed operator, 
+        uint256 indexed trx_balance, 
+        uint256 indexed token_balance);
+
+```
 
 ### V2
 
-topic swap = `d78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822`
+topic Swap = `d78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822`
 
 ```
     event Swap(
